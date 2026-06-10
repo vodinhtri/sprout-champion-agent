@@ -1,0 +1,43 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs & cache
+*.log
+.cache/
+tmp/
+dist/
+build/
+out/
+
+# Node (if chosen later)
+node_modules/
+
+# Python (if chosen later)
+__pycache__/
+.venv/
+venv/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Go (if chosen later)
+bin/
+vendor/
