@@ -1,0 +1,82 @@
+questions:
+  - id: sd-001
+    topic: system_design
+    difficulty: mid
+    question: "Thiết kế high-level architecture cho URL shortener (như bit.ly). Các components chính?"
+    follow_ups:
+      - "Làm sao generate unique short code ở scale?"
+    evaluation_criteria:
+      - "API, DB, redirect service"
+      - "ID generation (hash, counter, base62)"
+      - "Read-heavy optimization (cache)"
+    sample_good_points:
+      - "Analytics / click tracking"
+      - "Custom alias handling"
+
+  - id: sd-002
+    topic: system_design
+    difficulty: senior
+    question: "Thiết kế hệ thống chat real-time cho 1 triệu concurrent users. Key challenges?"
+    follow_ups:
+      - "Message ordering và delivery guarantees?"
+    evaluation_criteria:
+      - "WebSocket / long polling"
+      - "Pub/sub (Kafka, Redis)"
+      - "Sharding by room/user"
+      - "Presence, fan-out"
+    sample_good_points:
+      - "CRDT / conflict resolution"
+      - "Regional deployment"
+
+  - id: sd-003
+    topic: system_design
+    difficulty: mid
+    question: "Load balancer hoạt động thế nào? So sánh L4 vs L7 load balancing."
+    follow_ups:
+      - "Health check strategies?"
+    evaluation_criteria:
+      - "Round-robin, least connections"
+      - "L4 (TCP) vs L7 (HTTP routing)"
+      - "Sticky sessions trade-offs"
+    sample_good_points:
+      - "Auto-scaling integration"
+
+  - id: sd-004
+    topic: system_design
+    difficulty: junior
+    question: "Monolith vs Microservices — ưu nhược điểm? Khi nào chọn monolith?"
+    follow_ups:
+      - "Service discovery là gì?"
+    evaluation_criteria:
+      - "Deployment, team autonomy, complexity"
+      - "Start simple / modular monolith"
+    sample_good_points:
+      - "Strangler fig pattern"
+
+  - id: sd-005
+    topic: system_design
+    difficulty: senior
+    question: "Thiết kế hệ thống notification (email, push, SMS) đảm bảo at-least-once delivery."
+    follow_ups:
+      - "Idempotency khi user nhận duplicate notification?"
+    evaluation_criteria:
+      - "Queue-based architecture"
+      - "Retry with backoff"
+      - "Dead letter queue"
+      - "Idempotency keys"
+    sample_good_points:
+      - "Priority queues"
+      - "Rate limiting per channel"
+
+  - id: sd-006
+    topic: system_design
+    difficulty: mid
+    question: "CDN là gì và giải quyết vấn đề gì? Cache invalidation trên CDN thế nào?"
+    follow_ups:
+      - "Cache poisoning risks?"
+    evaluation_criteria:
+      - "Edge caching, latency reduction"
+      - "TTL, purge API, versioned assets"
+    sample_good_points:
+      - "Origin shield"
+      - "Geographic routing"

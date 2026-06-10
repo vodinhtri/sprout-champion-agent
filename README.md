@@ -1,99 +1,118 @@
-# Sprout Champion Agent
+# Sprout Champion Agent — Technical Interview Q&A
 
-> Repo phát triển agent cho dự án **Sprout Champion**.
+> AI agent phỏng vấn kỹ thuật (FE/BE/System Design) trên GreenNode AgentBase.
 
-**Trạng thái:** Early stage — công nghệ / stack chưa được chọn.
+Agent đóng vai **người phỏng vấn**: đặt câu hỏi từ ngân hàng, đánh giá câu trả lời (1–5), cho feedback, và tổng kết session.
+
+**Stack:** Python 3.12 · LangChain + Memory · GreenNode AgentBase SDK
 
 ---
 
-## Tiếng Việt
+## Cấu trúc
 
-### Giới thiệu
+| Path | Mô tả |
+|------|-------|
+| [`main.py`](main.py) | Entrypoint — `POST /invocations`, `GET /health` |
+| [`src/interview_tools.py`](src/interview_tools.py) | Tools: `list_topics`, `get_question` |
+| [`prompts/interviewer_system.md`](prompts/interviewer_system.md) | System prompt + rubric đánh giá |
+| [`config/questions/`](config/questions/) | Ngân hàng 18 câu (frontend, backend, system_design) |
+| [`scripts/setup_platform.sh`](scripts/setup_platform.sh) | Tạo Memory + LLM key trên platform |
+| [`scripts/deploy.sh`](scripts/deploy.sh) | Build, push, deploy runtime |
+| [`scripts/test_local.sh`](scripts/test_local.sh) | Test curl multi-turn |
 
-Đây là repository khởi tạo cho dự án agent liên quan đến game Sprout Champion. Repo hiện chỉ chứa cấu trúc thư mục, tài liệu và file mẫu — chưa có runtime hay dependency cụ thể.
+---
 
-### Cấu trúc thư mục
+## Setup
 
-| Thư mục / File | Mô tả |
-|----------------|-------|
-| [`docs/`](docs/) | Tài liệu kiến trúc và quyết định kỹ thuật (ADR) |
-| [`config/`](config/) | File cấu hình agent (sẽ bổ sung khi chọn stack) |
-| [`prompts/`](prompts/) | System prompt và prompt template |
-| [`.cursor/skills/`](.cursor/skills/) | GreenNode AgentBase skills (Cursor format) |
-| [`src/`](src/) | Source code runtime (sẽ bổ sung khi chọn stack) |
-| [`AGENTS.md`](AGENTS.md) | Hướng dẫn cho AI/agent khi làm việc trong repo |
-| [`.env.example`](.env.example) | Biến môi trường mẫu |
-
-### Bắt đầu nhanh
+### 1. Dependencies
 
 ```bash
-# 1. Clone repo
-git clone https://github.com/vodinhtri/sprout-champion-agent.git
-cd sprout-champion-agent
-
-# 2. Tạo file môi trường local
-cp .env.example .env
-# Chỉnh sửa .env với giá trị phù hợp (không commit file .env)
-
-# 3. Đọc tài liệu
-# - docs/architecture.md
-# - docs/decisions/0001-tech-stack.md
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Roadmap (dự kiến)
+### 2. IAM credentials
 
-1. **Chọn tech stack** — cập nhật ADR trong `docs/decisions/`
-2. **Scaffold runtime** — thêm dependency và code trong `src/`
-3. **Tích hợp tools / MCP** — kết nối agent với công cụ bên ngoài
-4. **CI/CD** — thêm pipeline sau khi stack ổn định
+Tạo [IAM Service Account](https://iam.console.vngcloud.vn/service-accounts), rồi điền vào `.greennode.json`:
 
-### Liên hệ
+```json
+{
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "agent_identity": ""
+}
+```
 
-Maintainer: _TBD_
+### 3. Platform resources (Memory + LLM)
+
+```bash
+cp .env.example .env
+bash scripts/setup_platform.sh
+```
+
+Script tự tạo AgentBase Memory (`MEMORY_ID`) và LLM API key (`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`).
+
+### 4. Chạy local
+
+```bash
+source venv/bin/activate
+python main.py
+```
+
+**Lưu ý:** Agent dùng memory — client **bắt buộc** gửi headers:
+
+- `X-GreenNode-AgentBase-Session-Id`
+- `X-GreenNode-AgentBase-User-Id`
+
+```bash
+# Terminal khác
+bash scripts/test_local.sh
+```
+
+Hoặc thủ công:
+
+```bash
+curl -X POST http://127.0.0.1:8080/invocations \
+  -H "Content-Type: application/json" \
+  -H "X-GreenNode-AgentBase-Session-Id: session-1" \
+  -H "X-GreenNode-AgentBase-User-Id: candidate-1" \
+  -d '{"message": "Tôi muốn phỏng vấn React, level mid"}'
+```
+
+### 5. Deploy AgentBase
+
+```bash
+bash scripts/deploy.sh sprout-interview-agent
+```
+
+---
+
+## Chat UI (trình duyệt)
+
+Mở endpoint trên trình duyệt để dùng giao diện chat:
+
+```
+https://endpoint-6136f094-59a6-41a8-8c88-dd4e2e3498af.agentbase-runtime.aiplatform.vngcloud.vn/
+```
+
+- Mỗi lần **Gửi** = một `POST /invocations`
+- Session được lưu trong `localStorage` (cùng tab = cùng buổi phỏng vấn)
+- `Ctrl+Shift+N` = bắt đầu session mới
+
+## Luồng phỏng vấn
+
+1. Chào hỏi → hỏi topic + level (junior/mid/senior)
+2. `get_question(topic, difficulty)` — lấy câu từ ngân hàng
+3. Ứng viên trả lời
+4. Chấm điểm + feedback theo rubric
+5. Hỏi tiếp hoặc tổng kết session
+
+**Topics:** `frontend`, `backend`, `system_design`
 
 ---
 
 ## English
 
-### Overview
+Technical interviewer agent for mock interviews (frontend, backend, system design). Built with LangChain + AgentBase Memory, deployed as a Docker container on GreenNode AgentBase Runtime (port 8080).
 
-This is the starter repository for an agent project related to the Sprout Champion game. It currently contains folder structure, documentation, and sample files only — no runtime or specific dependencies yet.
-
-### Directory structure
-
-| Directory / File | Description |
-|----------------|-------------|
-| [`docs/`](docs/) | Architecture docs and Architecture Decision Records (ADR) |
-| [`config/`](config/) | Agent configuration files (to be added when stack is chosen) |
-| [`prompts/`](prompts/) | System prompts and prompt templates |
-| [`.cursor/skills/`](.cursor/skills/) | GreenNode AgentBase skills (Cursor format) |
-| [`src/`](src/) | Runtime source code (to be added when stack is chosen) |
-| [`AGENTS.md`](AGENTS.md) | Guidelines for AI/agents working in this repo |
-| [`.env.example`](.env.example) | Sample environment variables |
-
-### Quick start
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/vodinhtri/sprout-champion-agent.git
-cd sprout-champion-agent
-
-# 2. Create local env file
-cp .env.example .env
-# Edit .env with appropriate values (never commit .env)
-
-# 3. Read the docs
-# - docs/architecture.md
-# - docs/decisions/0001-tech-stack.md
-```
-
-### Roadmap (planned)
-
-1. **Choose tech stack** — update ADR in `docs/decisions/`
-2. **Scaffold runtime** — add dependencies and code under `src/`
-3. **Integrate tools / MCP** — connect the agent to external tools
-4. **CI/CD** — add pipeline once the stack is stable
-
-### Contact
-
-Maintainer: _TBD_
+See setup steps above. Console: https://aiplatform.console.vngcloud.vn/agent-runtime?tab=runtime

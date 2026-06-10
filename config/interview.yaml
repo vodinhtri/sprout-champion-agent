@@ -1,0 +1,3 @@
+default_difficulty: mid
+max_questions_per_session: 5
+hint_after_attempts: 1

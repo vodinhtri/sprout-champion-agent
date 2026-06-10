@@ -1,0 +1,81 @@
+questions:
+  - id: fe-001
+    topic: frontend
+    difficulty: junior
+    question: "Giải thích sự khác biệt giữa `let`, `const` và `var` trong JavaScript."
+    follow_ups:
+      - "Temporal dead zone là gì?"
+    evaluation_criteria:
+      - "Block scope vs function scope"
+      - "Hoisting behavior"
+      - "const không gán lại được reference"
+    sample_good_points:
+      - "var có function scope và hoisting"
+      - "let/const có block scope"
+
+  - id: fe-002
+    topic: frontend
+    difficulty: mid
+    question: "Giải thích React reconciliation và khi nào component re-render?"
+    follow_ups:
+      - "Vai trò của key prop trong list rendering?"
+    evaluation_criteria:
+      - "Virtual DOM diff"
+      - "Triggers: state, props, context, parent re-render"
+      - "React.memo / useMemo khi nào hữu ích"
+    sample_good_points:
+      - "Fiber architecture (bonus)"
+      - "Batching updates"
+
+  - id: fe-003
+    topic: frontend
+    difficulty: mid
+    question: "So sánh `useEffect` và `useLayoutEffect`. Khi nào dùng cái nào?"
+    follow_ups:
+      - "Cleanup function trong useEffect dùng để làm gì?"
+    evaluation_criteria:
+      - "Timing: after paint vs before paint"
+      - "Use cases: DOM measurement, flicker prevention"
+      - "Cleanup on unmount/deps change"
+    sample_good_points:
+      - "SSR considerations"
+
+  - id: fe-004
+    topic: frontend
+    difficulty: senior
+    question: "Thiết kế chiến lược tối ưu performance cho một trang React có danh sách 10.000 items."
+    follow_ups:
+      - "Virtualization vs pagination trade-offs?"
+    evaluation_criteria:
+      - "Virtualization (react-window, etc.)"
+      - "Memoization strategy"
+      - "Bundle splitting / lazy loading"
+      - "Measurement (LCP, INP, profiling)"
+    sample_good_points:
+      - "Web Workers for heavy compute"
+      - "Server-side pagination"
+
+  - id: fe-005
+    topic: frontend
+    difficulty: junior
+    question: "CSS Box Model là gì? `box-sizing: border-box` khác gì so với `content-box`?"
+    follow_ups:
+      - "Margin collapse là gì?"
+    evaluation_criteria:
+      - "content, padding, border, margin"
+      - "border-box includes padding+border in width"
+    sample_good_points:
+      - "Practical layout debugging"
+
+  - id: fe-006
+    topic: frontend
+    difficulty: senior
+    question: "Giải thích event loop trong browser và sự khác biệt giữa microtask và macrotask queue."
+    follow_ups:
+      - "Cho ví dụ thứ tự log với Promise và setTimeout"
+    evaluation_criteria:
+      - "Call stack, task queues"
+      - "Promise → microtask, setTimeout → macrotask"
+      - "Rendering opportunities between tasks"
+    sample_good_points:
+      - "requestAnimationFrame placement"
