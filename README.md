@@ -1,6 +1,6 @@
 # Sprout Champion Agent
 
-> Repo phát triển agent cho dự án **Sprout Champion** (ZaloPay Game-FE).
+> Repo phát triển agent cho dự án **Sprout Champion**.
 
 **Trạng thái:** Early stage — công nghệ / stack chưa được chọn.
 
