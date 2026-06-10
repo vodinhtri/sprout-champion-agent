@@ -19,7 +19,7 @@
 | [`docs/`](docs/) | Tài liệu kiến trúc và quyết định kỹ thuật (ADR) |
 | [`config/`](config/) | File cấu hình agent (sẽ bổ sung khi chọn stack) |
 | [`prompts/`](prompts/) | System prompt và prompt template |
-| [`skills/`](skills/) | Cursor Agent Skills (nếu sử dụng) |
+| [`.cursor/skills/`](.cursor/skills/) | GreenNode AgentBase skills (Cursor format) |
 | [`src/`](src/) | Source code runtime (sẽ bổ sung khi chọn stack) |
 | [`AGENTS.md`](AGENTS.md) | Hướng dẫn cho AI/agent khi làm việc trong repo |
 | [`.env.example`](.env.example) | Biến môi trường mẫu |
@@ -66,7 +66,7 @@ This is the starter repository for an agent project related to the Sprout Champi
 | [`docs/`](docs/) | Architecture docs and Architecture Decision Records (ADR) |
 | [`config/`](config/) | Agent configuration files (to be added when stack is chosen) |
 | [`prompts/`](prompts/) | System prompts and prompt templates |
-| [`skills/`](skills/) | Cursor Agent Skills (if used) |
+| [`.cursor/skills/`](.cursor/skills/) | GreenNode AgentBase skills (Cursor format) |
 | [`src/`](src/) | Runtime source code (to be added when stack is chosen) |
 | [`AGENTS.md`](AGENTS.md) | Guidelines for AI/agents working in this repo |
 | [`.env.example`](.env.example) | Sample environment variables |
