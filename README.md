@@ -1,118 +1,72 @@
-# Sprout Champion Agent — Technical Interview Q&A
+# 🤖 AI Todo Generator
 
-> AI agent phỏng vấn kỹ thuật (FE/BE/System Design) trên GreenNode AgentBase.
+> Thay vì tự nhập todo, AI đọc tin tức & thị trường rồi tự tạo danh sách việc cần làm cho bạn.
 
-Agent đóng vai **người phỏng vấn**: đặt câu hỏi từ ngân hàng, đánh giá câu trả lời (1–5), cho feedback, và tổng kết session.
+## Ý tưởng
 
-**Stack:** Python 3.12 · LangChain + Memory · GreenNode AgentBase SDK
+- Giá vàng đang giảm mạnh → **Mua vàng nếu sắp cưới, không mua đầu tư**
+- Bitcoin vừa pump +5% → **Có nên chốt lời không?**
+- Tin tức cướp giật tăng → **Ra đường cẩn thận, tránh đi tối**
+- Cổ phiếu XYZ đang về đáy → **Xem xét vào hàng**
 
----
+## Tech Stack
 
-## Cấu trúc
+- **Backend**: Python · FastAPI · Claude AI (Haiku) · yfinance · CoinGecko · VnExpress RSS · CafeF RSS
+- **Frontend**: React · Vite · Tailwind CSS · Framer Motion
 
-| Path | Mô tả |
-|------|-------|
-| [`main.py`](main.py) | Entrypoint — `POST /invocations`, `GET /health` |
-| [`src/interview_tools.py`](src/interview_tools.py) | Tools: `list_topics`, `get_question` |
-| [`prompts/interviewer_system.md`](prompts/interviewer_system.md) | System prompt + rubric đánh giá |
-| [`config/questions/`](config/questions/) | Ngân hàng 18 câu (frontend, backend, system_design) |
-| [`scripts/setup_platform.sh`](scripts/setup_platform.sh) | Tạo Memory + LLM key trên platform |
-| [`scripts/deploy.sh`](scripts/deploy.sh) | Build, push, deploy runtime |
-| [`scripts/test_local.sh`](scripts/test_local.sh) | Test curl multi-turn |
+## Setup nhanh
 
----
+### 1. Lấy Anthropic API Key
 
-## Setup
+Đăng ký tại [console.anthropic.com](https://console.anthropic.com) → lấy API key.
 
-### 1. Dependencies
+### 2. Tạo file `.env`
 
 ```bash
-python3 -m venv venv && source venv/bin/activate
+cp backend/.env.example backend/.env
+# Mở backend/.env và điền API key vào
+```
+
+### 3. Chạy app
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+App sẽ chạy tại **http://localhost:5173**
+
+---
+
+### Chạy thủ công (nếu cần)
+
+**Backend:**
+```bash
+cd backend
 pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
 
-### 2. IAM credentials
-
-Tạo [IAM Service Account](https://iam.console.vngcloud.vn/service-accounts), rồi điền vào `.greennode.json`:
-
-```json
-{
-  "client_id": "your-client-id",
-  "client_secret": "your-client-secret",
-  "agent_identity": ""
-}
-```
-
-### 3. Platform resources (Memory + LLM)
-
+**Frontend:**
 ```bash
-cp .env.example .env
-bash scripts/setup_platform.sh
+cd frontend
+npm install
+npm run dev
 ```
 
-Script tự tạo AgentBase Memory (`MEMORY_ID`) và LLM API key (`LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`).
+## Nguồn dữ liệu
 
-### 4. Chạy local
+| Nguồn | Dữ liệu |
+|-------|---------|
+| VnExpress RSS | Tin tức thời sự, kinh doanh, thế giới |
+| CafeF RSS | Chứng khoán Việt Nam |
+| CoinGecko API | Crypto: BTC, ETH, SOL, BNB |
+| Yahoo Finance | Vàng (GLD ETF), cổ phiếu quốc tế |
+| Open Exchange Rates | USD/VND và các tỷ giá khác |
 
-```bash
-source venv/bin/activate
-python main.py
-```
+## Cách dùng
 
-**Lưu ý:** Agent dùng memory — client **bắt buộc** gửi headers:
-
-- `X-GreenNode-AgentBase-Session-Id`
-- `X-GreenNode-AgentBase-User-Id`
-
-```bash
-# Terminal khác
-bash scripts/test_local.sh
-```
-
-Hoặc thủ công:
-
-```bash
-curl -X POST http://127.0.0.1:8080/invocations \
-  -H "Content-Type: application/json" \
-  -H "X-GreenNode-AgentBase-Session-Id: session-1" \
-  -H "X-GreenNode-AgentBase-User-Id: candidate-1" \
-  -d '{"message": "Tôi muốn phỏng vấn React, level mid"}'
-```
-
-### 5. Deploy AgentBase
-
-```bash
-bash scripts/deploy.sh sprout-interview-agent
-```
-
----
-
-## Chat UI (trình duyệt)
-
-Mở endpoint trên trình duyệt để dùng giao diện chat:
-
-```
-https://endpoint-6136f094-59a6-41a8-8c88-dd4e2e3498af.agentbase-runtime.aiplatform.vngcloud.vn/
-```
-
-- Mỗi lần **Gửi** = một `POST /invocations`
-- Session được lưu trong `localStorage` (cùng tab = cùng buổi phỏng vấn)
-- `Ctrl+Shift+N` = bắt đầu session mới
-
-## Luồng phỏng vấn
-
-1. Chào hỏi → hỏi topic + level (junior/mid/senior)
-2. `get_question(topic, difficulty)` — lấy câu từ ngân hàng
-3. Ứng viên trả lời
-4. Chấm điểm + feedback theo rubric
-5. Hỏi tiếp hoặc tổng kết session
-
-**Topics:** `frontend`, `backend`, `system_design`
-
----
-
-## English
-
-Technical interviewer agent for mock interviews (frontend, backend, system design). Built with LangChain + AgentBase Memory, deployed as a Docker container on GreenNode AgentBase Runtime (port 8080).
-
-See setup steps above. Console: https://aiplatform.console.vngcloud.vn/agent-runtime?tab=runtime
+1. Chọn **lĩnh vực quan tâm** (⚙️ góc phải header)
+2. Nhấn **✨ Tạo Todo** → AI phân tích dữ liệu thực
+3. Click vào card để đánh dấu **done** ✅
+4. Lọc theo danh mục bằng các nút filter

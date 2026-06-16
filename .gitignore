@@ -1,13 +1,17 @@
+# Python
 __pycache__/
-*.py[cod]
-.env
-.greennode.json
-.agentbase/
-.agentbase-state.json
-*.credentials.json
+*.pyc
+*.pyo
 .venv/
 venv/
-*.egg-info/
-dist/
-build/
-tmp/
+
+# Env - never commit secrets
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store

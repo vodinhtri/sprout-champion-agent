@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/lap14946/Downloads/claw-a-thon && mkdir -p /Users/lap14946/Downloads/claw-a-thon/backend/services /Users/lap14946/Downloads/claw-a-thon/frontend/src/components)",
+      "Bash(python3 -m pip install -r requirements.txt -q)",
+      "Bash(npm install *)",
+      "Bash(pip3 --version)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/lap14946/.nvm/versions/node/**)",
+      "Read(//usr/local/**)",
+      "Bash(command -v nvm)",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c \"import fastapi, anthropic, feedparser, yfinance; print\\('All backend deps OK'\\)\")",
+      "Bash(ANTHROPIC_API_KEY=test python3 -c ' *)",
+      "Bash(chmod +x /Users/lap14946/Downloads/claw-a-thon/start.sh)",
+      "Bash(python3 -m uvicorn main:app --port 8000)",
+      "Bash(curl -s http://localhost:8000/api/health)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:8000/api/market-data)",
+      "Bash(python3 -c \"import google.generativeai as genai; print\\('Gemini SDK OK'\\)\")",
+      "Bash(sleep 3 && cat /tmp/frontend.log)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -X POST http://localhost:8000/api/todos/generate -H 'Content-Type: application/json' -d '{\"interests\": [\"finance\", \"news\", \"tech\"]}')",
+      "Bash(python3 -c ' *)",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "Bash(ssh -T git@github.com)"
+    ],
+    "additionalDirectories": [
+      "/Users/lap14946/Downloads/claw-a-thon/backend"
+    ]
+  }
+}
