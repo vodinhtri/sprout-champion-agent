@@ -9,7 +9,7 @@ function timeAgo(isoStr) {
   return `${Math.floor(seconds / 3600)} giờ trước`
 }
 
-export default function Header({ onGenerate, loading, generatedAt, onPreferences }) {
+export default function Header({ onGenerate, loading, generatedAt, onPreferences, onAlerts }) {
   const ago = timeAgo(generatedAt)
 
   return (
@@ -33,6 +33,13 @@ export default function Header({ onGenerate, loading, generatedAt, onPreferences
               Cập nhật {ago}
             </span>
           )}
+          <button
+            onClick={onAlerts}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700/60 transition-all"
+            title="Cảnh báo giá & nhắc giờ"
+          >
+            🔔
+          </button>
           <button
             onClick={onPreferences}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700/60 transition-all"

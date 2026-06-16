@@ -8,6 +8,9 @@ venv/
 # Env - never commit secrets
 backend/.env
 
+# Local alert storage
+backend/data/
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
@@ -15,3 +18,4 @@ frontend/.vite/
 
 # OS
 .DS_Store
+.agentbase/

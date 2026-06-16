@@ -1,0 +1,27 @@
+# Secrets — KHÔNG bao giờ đưa vào image
+.env
+.env.*
+backend/.env
+.greennode.json
+*.key
+.secrets/
+
+# Local state
+backend/data/
+.agentbase/
+.agentbase-state.json
+tmp/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Frontend (không deploy trong runtime backend)
+frontend/
+
+# VCS / tooling
+.git/
+.claude/
+*.md

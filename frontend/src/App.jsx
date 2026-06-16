@@ -4,6 +4,7 @@ import axios from 'axios'
 import Header from './components/Header'
 import TodoCard from './components/TodoCard'
 import PreferencesPanel from './components/PreferencesPanel'
+import AlertsPanel from './components/AlertsPanel'
 import LoadingSkeleton from './components/LoadingSkeleton'
 
 const INTERESTS = [
@@ -38,6 +39,7 @@ export default function App() {
   const [selectedInterests, setSelectedInterests] = useState(['finance', 'news', 'tech'])
   const [filter, setFilter] = useState('all')
   const [showPrefs, setShowPrefs] = useState(false)
+  const [showAlerts, setShowAlerts] = useState(false)
 
   const generate = useCallback(async () => {
     setLoading(true)
@@ -79,6 +81,7 @@ export default function App() {
         loading={loading}
         generatedAt={generatedAt}
         onPreferences={() => setShowPrefs(p => !p)}
+        onAlerts={() => setShowAlerts(p => !p)}
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -92,6 +95,11 @@ export default function App() {
               onClose={() => setShowPrefs(false)}
             />
           )}
+        </AnimatePresence>
+
+        {/* Alerts panel */}
+        <AnimatePresence>
+          {showAlerts && <AlertsPanel onClose={() => setShowAlerts(false)} />}
         </AnimatePresence>
 
         {/* Empty / welcome state */}

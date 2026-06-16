@@ -2,11 +2,12 @@ import json
 import os
 from typing import List, Dict, Any
 
-import google.generativeai as genai
+import httpx
 from models import UserPreferences
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-3-flash-preview")
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "").rstrip("/")
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_MODEL = os.environ.get("LLM_MODEL", "openai/gpt-4o-mini")
 
 SYSTEM_PROMPT = """Bạn là một AI thông minh chuyên phân tích dữ liệu thực tế (tin tức thời sự, thị trường tài chính, crypto, tỷ giá) và tạo ra danh sách Todo thực tiễn, cá nhân hóa cho người dùng Việt Nam.
 
@@ -58,9 +59,7 @@ CỔ PHIẾU QUỐC TẾ:
         for item in news_data[:18]
     )
 
-    prompt = f"""{SYSTEM_PROMPT}
-
-Người dùng quan tâm đến: {', '.join(preferences.interests)}
+    prompt = f"""Người dùng quan tâm đến: {', '.join(preferences.interests)}
 
 {market_ctx}
 
@@ -70,8 +69,24 @@ Người dùng quan tâm đến: {', '.join(preferences.interests)}
 Tạo Todo list JSON dựa trên dữ liệu trên. Chỉ trả về JSON array."""
 
     try:
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"{LLM_BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {LLM_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": LLM_MODEL,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.8,
+                },
+            )
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
 
         if "```" in text:
             text = text.split("```")[1]
