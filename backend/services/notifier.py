@@ -135,7 +135,7 @@ def _build_card(alert, message: str, value: Optional[float]) -> dict:
 
     body.append({
         "type": "TextBlock",
-        "text": f"🤖 AI Todo Generator · {now}",
+        "text": f"🤖 Momentum · {now}",
         "size": "Small", "isSubtle": True, "wrap": True, "spacing": "Medium",
     })
     return content

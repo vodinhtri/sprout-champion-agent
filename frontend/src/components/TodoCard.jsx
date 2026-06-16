@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 
 const PRIORITY = {
@@ -42,8 +42,7 @@ const CATEGORY_ICON = {
   sports:       '⚽',
 }
 
-export default function TodoCard({ todo, index }) {
-  const [done, setDone] = useState(false)
+export default function TodoCard({ todo, index, done = false, onToggle }) {
   const cfg = PRIORITY[todo.priority] ?? PRIORITY.info
 
   return (
@@ -53,7 +52,7 @@ export default function TodoCard({ todo, index }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ delay: index * 0.07, duration: 0.4, ease: 'easeOut' }}
-      onClick={() => setDone(d => !d)}
+      onClick={onToggle}
       className={`
         relative rounded-2xl border ${cfg.border} ${cfg.bg}
         backdrop-blur-sm p-5 shadow-lg ${cfg.shadow}
@@ -92,6 +91,19 @@ export default function TodoCard({ todo, index }) {
       <p className="text-slate-500 text-xs leading-relaxed border-t border-slate-700/40 pt-3">
         💡 {todo.rationale}
       </p>
+
+      {/* Source link */}
+      {todo.link && (
+        <a
+          href={todo.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="relative z-10 inline-flex items-center gap-1 mt-3 text-xs font-medium text-violet-400 hover:text-violet-300 underline underline-offset-2"
+        >
+          🔗 Mở nguồn
+        </a>
+      )}
 
       {/* Done overlay */}
       {done && (

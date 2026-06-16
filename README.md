@@ -1,4 +1,4 @@
-# 🤖 AI Todo Generator
+# 🤖 Momentum
 
 > Thay vì tự nhập todo, AI đọc tin tức & thị trường rồi tự tạo danh sách việc cần làm cho bạn.
 

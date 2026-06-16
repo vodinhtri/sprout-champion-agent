@@ -30,7 +30,8 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(gh auth *)",
-      "Bash(ssh -T git@github.com)"
+      "Bash(ssh -T git@github.com)",
+      "Bash([ -s \"$HOME/.nvm/nvm.sh\" ])"
     ],
     "additionalDirectories": [
       "/Users/lap14946/Downloads/claw-a-thon/backend"

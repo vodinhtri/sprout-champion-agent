@@ -1,7 +1,7 @@
 #!/bin/bash
-# AI Todo Generator — Quick Start
+# Momentum — Quick Start
 
-echo "🤖 AI Todo Generator — Starting..."
+echo "🤖 Momentum — Starting..."
 
 # Load nvm if available
 export NVM_DIR="$HOME/.nvm"

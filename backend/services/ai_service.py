@@ -1,6 +1,7 @@
 import json
 import os
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Optional
 
 import httpx
 from models import UserPreferences
@@ -21,10 +22,47 @@ Mỗi todo phải:
 5. **priority**: "urgent" (cần làm ngay) | "normal" (nên làm) | "info" (để biết)
 6. **category**: "finance" | "news" | "lifestyle" | "work" | "entertainment"
 7. **data_point**: Con số/chỉ số nổi bật nhất (ví dụ: "BTC +5.2%", "Vàng -1.1%", "USD: 25,400đ")
+8. **source_ref**: (TÙY CHỌN) Số thứ tự của tin tức liên quan nhất trong danh sách "TIN TỨC MỚI NHẤT" mà todo dựa vào. Chỉ điền số nếu todo bắt nguồn từ 1 tin cụ thể; nếu todo dựa trên dữ liệu thị trường (giá vàng/crypto/tỷ giá) thì để null. TUYỆT ĐỐI không tự bịa URL.
 
 Phong cách: thực tế, đôi khi hài hước như người bạn hay đọc báo, không lan man. Ưu tiên sắp xếp: urgent > normal > info.
 
 Chỉ trả về JSON array thuần túy, không có markdown hay text ngoài JSON."""
+
+
+# Link dự phòng cho todo về crypto khi không gắn với 1 tin tức cụ thể (URL ổn định).
+COIN_URLS = {
+    "bitcoin": "https://www.coingecko.com/en/coins/bitcoin",
+    "btc": "https://www.coingecko.com/en/coins/bitcoin",
+    "ethereum": "https://www.coingecko.com/en/coins/ethereum",
+    "eth": "https://www.coingecko.com/en/coins/ethereum",
+    "solana": "https://www.coingecko.com/en/coins/solana",
+    "sol": "https://www.coingecko.com/en/coins/solana",
+    "binance": "https://www.coingecko.com/en/coins/bnb",
+    "bnb": "https://www.coingecko.com/en/coins/bnb",
+}
+
+
+def _resolve_link(todo: Dict, news_items: List[Dict]) -> Optional[str]:
+    """URL thật cho todo: ưu tiên bài báo theo source_ref, fallback trang coin, không thì None.
+
+    Không bao giờ tin URL do model tự sinh — chỉ lấy từ news_items hoặc map cố định.
+    """
+    ref = todo.get("source_ref")
+    try:
+        idx = int(ref) - 1
+        if 0 <= idx < len(news_items):
+            link = (news_items[idx].get("link") or "").strip()
+            if link.startswith("http"):
+                return link
+    except (TypeError, ValueError):
+        pass
+
+    # Khớp theo TOKEN (ranh giới từ) để "eth"/"sol" không dính vào "method", "resolve"...
+    tokens = set(re.findall(r"[a-z0-9]+", f"{todo.get('title', '')} {todo.get('data_point', '')}".lower()))
+    for keyword, url in COIN_URLS.items():
+        if keyword in tokens:
+            return url
+    return None
 
 
 async def generate_todos(
@@ -53,10 +91,11 @@ TỶ GIÁ: USD/VND = {rates.get('USD_VND', 25400):,}đ | USD/EUR = {rates.get('U
 CỔ PHIẾU QUỐC TẾ:
 {chr(10).join(f"- {k}: ${v['price']} ({v['change_pct']:+.1f}%)" for k, v in stocks.items())}"""
 
+    news_items = news_data[:18]
     news_ctx = "\n".join(
-        f"- [{item['source']}] {item['title']}"
+        f"{idx}. [{item['source']}] {item['title']}"
         + (f": {item['summary'][:120]}" if item.get("summary") else "")
-        for item in news_data[:18]
+        for idx, item in enumerate(news_items, start=1)
     )
 
     prompt = f"""Người dùng quan tâm đến: {', '.join(preferences.interests)}
@@ -99,6 +138,8 @@ Tạo Todo list JSON dựa trên dữ liệu trên. Chỉ trả về JSON array.
         for i, todo in enumerate(todos):
             if "id" not in todo or not todo["id"]:
                 todo["id"] = f"todo-{i+1}"
+            todo["link"] = _resolve_link(todo, news_items)
+            todo.pop("source_ref", None)
 
         return todos
 
@@ -114,5 +155,6 @@ Tạo Todo list JSON dựa trên dữ liệu trên. Chỉ trả về JSON array.
                 "priority": "info",
                 "category": "work",
                 "data_point": "Error: retry",
+                "link": None,
             }
         ]

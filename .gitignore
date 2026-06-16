@@ -6,6 +6,7 @@ __pycache__/
 venv/
 
 # Env - never commit secrets
+.env
 backend/.env
 
 # Local alert storage
@@ -19,3 +20,4 @@ frontend/.vite/
 # OS
 .DS_Store
 .agentbase/
+.greennode.json

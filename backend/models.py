@@ -17,6 +17,12 @@ class TodoItem(BaseModel):
     priority: str  # urgent | normal | info
     category: str  # finance | news | lifestyle | work | entertainment
     data_point: Optional[str] = None
+    link: Optional[str] = None  # URL nguồn (bài báo / trang coin) → map sang cột Link
+    done: bool = False  # trạng thái hoàn thành (đánh dấu trên UI) → map sang cột Status
+
+
+class SyncNotionRequest(BaseModel):
+    todos: List[TodoItem]
 
 
 class AssetType(str, Enum):

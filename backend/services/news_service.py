@@ -51,6 +51,7 @@ async def get_news(interests: List[str]) -> List[Dict]:
                         "title": title,
                         "summary": summary,
                         "source": source_title,
+                        "link": entry.get("link", "").strip(),
                     })
         except Exception as e:
             print(f"[news] RSS error {key}: {e}")

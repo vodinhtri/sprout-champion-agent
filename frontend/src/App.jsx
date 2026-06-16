@@ -5,6 +5,7 @@ import Header from './components/Header'
 import TodoCard from './components/TodoCard'
 import PreferencesPanel from './components/PreferencesPanel'
 import AlertsPanel from './components/AlertsPanel'
+import PredictPanel from './components/PredictPanel'
 import LoadingSkeleton from './components/LoadingSkeleton'
 
 const INTERESTS = [
@@ -40,6 +41,9 @@ export default function App() {
   const [filter, setFilter] = useState('all')
   const [showPrefs, setShowPrefs] = useState(false)
   const [showAlerts, setShowAlerts] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState(null)
+  const [doneIds, setDoneIds] = useState(() => new Set())
 
   const generate = useCallback(async () => {
     setLoading(true)
@@ -51,6 +55,7 @@ export default function App() {
         name: 'User',
       })
       setTodos(data.todos ?? [])
+      setDoneIds(new Set())
       setGeneratedAt(data.generated_at)
     } catch (e) {
       console.error(e)
@@ -63,12 +68,71 @@ export default function App() {
     }
   }, [selectedInterests])
 
+  const loadFromNotion = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setFilter('all')
+    setSyncMsg(null)
+    try {
+      const { data } = await axios.get('/api/todos/from-notion')
+      const items = data.todos ?? []
+      setTodos(items)
+      // Card được đánh dấu done nếu Status trên Notion là hoàn thành.
+      setDoneIds(new Set(
+        items.filter(t => /done|complete|hoàn|xong/i.test(t.status || '')).map(t => t.id)
+      ))
+      setGeneratedAt(null)
+      if (items.length === 0) {
+        setError('Notion database đang trống — chưa có row nào để hiển thị.')
+      }
+    } catch (e) {
+      console.error(e)
+      setError(e?.response?.data?.detail ?? 'Không lấy được dữ liệu từ Notion.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const toggleDone = useCallback((id) => {
+    setDoneIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const syncNotion = useCallback(async () => {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const payload = { todos: todos.map(t => ({ ...t, done: doneIds.has(t.id) })) }
+      const { data } = await axios.post('/api/todos/sync-notion', payload)
+      const parts = []
+      if (data.created) parts.push(`${data.created} mới`)
+      if (data.updated) parts.push(`${data.updated} cập nhật`)
+      if (data.failed) parts.push(`${data.failed} lỗi`)
+      const detail = parts.length ? ` — ${parts.join(', ')}` : ''
+      setSyncMsg({ ok: true, text: `Đã sync ${data.synced} todo lên Notion${detail}` })
+    } catch (e) {
+      console.error(e)
+      setSyncMsg({
+        ok: false,
+        text: e?.response?.data?.detail ?? 'Sync Notion thất bại.',
+      })
+    } finally {
+      setSyncing(false)
+    }
+  }, [todos, doneIds])
+
   // Filter + sort
   const filtered = filter === 'all' ? todos : todos.filter(t => t.category === filter)
   const sorted = [...filtered].sort(
     (a, b) => (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1)
   )
   const categories = ['all', ...new Set(todos.map(t => t.category))]
+  // Category đang xem để dự đoán: filter cụ thể, hoặc category đầu tiên khi đang ở "Tất cả".
+  const predictCat = filter !== 'all' ? filter : categories.find(c => c !== 'all')
 
   const urgentCount = todos.filter(t => t.priority === 'urgent').length
   const normalCount = todos.filter(t => t.priority === 'normal').length
@@ -111,7 +175,7 @@ export default function App() {
             className="flex flex-col items-center justify-center py-24 text-center"
           >
             <div className="text-8xl mb-6 drop-shadow-2xl">🤖</div>
-            <h2 className="text-3xl font-bold text-white mb-3">AI Todo Generator</h2>
+            <h2 className="text-3xl font-bold text-white mb-3">Momentum</h2>
             <p className="text-slate-400 max-w-md mb-2 leading-relaxed">
               Thay vì tự nhập todo, để AI đọc tin tức &amp; dữ liệu thị trường rồi
               tự động tạo danh sách việc cần làm cho bạn hôm nay.
@@ -126,6 +190,14 @@ export default function App() {
               className="bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-500 hover:to-indigo-400 text-white font-bold py-4 px-12 rounded-2xl text-lg shadow-2xl shadow-violet-500/30 transition-all"
             >
               ✨ Tạo Todo List của tôi
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={loadFromNotion}
+              className="mt-3 bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 font-medium py-2.5 px-8 rounded-xl border border-slate-600/40 transition-all text-sm"
+            >
+              📥 Lấy todo từ Notion
             </motion.button>
             <p className="text-slate-600 text-xs mt-4">
               Đang theo dõi: {selectedInterests.map(id => INTERESTS.find(i => i.id === id)?.label).join(' · ')}
@@ -204,31 +276,58 @@ export default function App() {
               </div>
             </div>
 
+            {/* Prediction chart cho category đang xem */}
+            {predictCat && (
+              <PredictPanel category={predictCat} label={CATEGORY_LABEL[predictCat] ?? predictCat} />
+            )}
+
             {/* Grid */}
             <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <AnimatePresence>
                 {sorted.map((todo, i) => (
-                  <TodoCard key={todo.id} todo={todo} index={i} />
+                  <TodoCard
+                    key={todo.id}
+                    todo={todo}
+                    index={i}
+                    done={doneIds.has(todo.id)}
+                    onToggle={() => toggleDone(todo.id)}
+                  />
                 ))}
               </AnimatePresence>
             </motion.div>
 
             {/* Bottom actions */}
-            <div className="flex items-center justify-center gap-4 mt-10">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={generate}
-                className="bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 font-medium py-2.5 px-7 rounded-xl border border-slate-600/40 transition-all text-sm"
-              >
-                🔄 Tạo lại
-              </motion.button>
-              <button
-                onClick={() => setShowPrefs(p => !p)}
-                className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
-              >
-                ⚙️ Đổi sở thích
-              </button>
+            <div className="flex flex-col items-center gap-3 mt-10">
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={generate}
+                  className="bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 font-medium py-2.5 px-7 rounded-xl border border-slate-600/40 transition-all text-sm"
+                >
+                  🔄 Tạo lại
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={syncNotion}
+                  disabled={syncing}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-500 hover:to-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 px-7 rounded-xl transition-all text-sm shadow-lg shadow-violet-500/20"
+                >
+                  {syncing ? '⏳ Đang sync...' : '📝 Sync lên Notion'}
+                </motion.button>
+                <button
+                  onClick={() => setShowPrefs(p => !p)}
+                  className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
+                >
+                  ⚙️ Đổi sở thích
+                </button>
+              </div>
+              {syncMsg && (
+                <p className={`text-sm ${syncMsg.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {syncMsg.ok ? '✅ ' : '⚠️ '}{syncMsg.text}
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -236,7 +335,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="text-center pb-8 text-slate-700 text-xs">
-        AI Todo · Dữ liệu thực từ VnExpress · CafeF · CoinGecko · Yahoo Finance
+        Momentum · Dữ liệu thực từ VnExpress · CafeF · CoinGecko · Yahoo Finance
       </footer>
     </div>
   )

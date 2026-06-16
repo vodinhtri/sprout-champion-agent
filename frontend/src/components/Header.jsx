@@ -21,7 +21,7 @@ export default function Header({ onGenerate, loading, generatedAt, onPreferences
             🤖
           </div>
           <div>
-            <h1 className="text-white font-bold text-lg leading-none">AI Todo</h1>
+            <h1 className="text-white font-bold text-lg leading-none">Momentum</h1>
             <p className="text-slate-500 text-[10px] leading-none mt-0.5">Powered by Claude</p>
           </div>
         </div>

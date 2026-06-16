@@ -18,8 +18,10 @@ __pycache__/
 venv/
 .venv/
 
-# Frontend (không deploy trong runtime backend)
-frontend/
+# Frontend: build trong image (multi-stage). Chỉ loại artefact local.
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
 # VCS / tooling
 .git/

@@ -6,17 +6,21 @@ from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Load backend/.env if present, otherwise fall back to the project-root .env
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from models import AlertCreate, UserPreferences
+from models import AlertCreate, SyncNotionRequest, UserPreferences
 from services import alert_store
 from services.ai_service import generate_todos
 from services.market_service import get_market_data
 from services.news_service import get_news
 from services.notifier import send_notification
+from services.notion_service import NotionError, fetch_todos, sync_todos
+from services.prediction_service import get_prediction
 from services.scheduler import evaluate_once, start_scheduler
 
 
@@ -27,7 +31,7 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="AI Todo Generator", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Momentum", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,10 +41,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Thư mục chứa React UI đã build (do Dockerfile copy vào ./static). Dev không có → serve API.
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+SERVE_SPA = os.path.isdir(STATIC_DIR)
+
 
 @app.get("/")
 def root():
-    return {"message": "AI Todo Generator API", "status": "running"}
+    if SERVE_SPA:
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    return {"message": "Momentum API", "status": "running"}
 
 
 @app.get("/api/health")
@@ -69,6 +79,34 @@ async def generate(preferences: UserPreferences):
             "generated_at": datetime.now().isoformat(),
             "data_sources": ["VnExpress", "CafeF", "CoinGecko", "Yahoo Finance", "Open Exchange Rates"],
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/todos/sync-notion")
+async def sync_notion(req: SyncNotionRequest):
+    try:
+        return await sync_todos([t.model_dump() for t in req.todos])
+    except NotionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/todos/from-notion")
+async def todos_from_notion():
+    try:
+        return await fetch_todos()
+    except NotionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/predict/{category}")
+async def predict(category: str):
+    try:
+        return await get_prediction(category)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -130,7 +168,7 @@ async def check_now():
 @app.post("/api/alerts/test-notification")
 async def test_notification(body: dict):
     channel = body.get("channel", "teams")
-    message = body.get("message", "🔔 Test notification từ AI Todo Generator")
+    message = body.get("message", "🔔 Test notification từ Momentum")
 
     class _Stub:
         label = "Test notification"
@@ -139,6 +177,12 @@ async def test_notification(body: dict):
 
     ok = await send_notification(channel, message, _Stub())
     return {"ok": ok}
+
+
+# Serve React UI đã build (production). Mount SAU tất cả route /api & /health
+# để các route đó được match trước; phần còn lại ("/", "/assets/*") do SPA xử lý.
+if SERVE_SPA:
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="spa")
 
 
 if __name__ == "__main__":
